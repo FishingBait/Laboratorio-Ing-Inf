@@ -120,43 +120,44 @@ async def perform_parse(url: str, local: bool = False, provided_html: str = ""):
 
             elif "rottentomatoes.com" in domain:
                 try:
-                    # Normalizzazione degli header markdown
+                    # 1. Normalizzazione degli header
                     testo_estratto = re.sub(r'##\s+', '## ', testo_estratto)
                     
-                    # 1. MODIFICA: Aggiunto "## Cast & Crew" ai marker di inizio pagina utili
+                    # 2. TAGLIO INIZIALE: Trova dove inizia la roba utile e taglia l'intestazione
                     for marker in ["## Where to Watch", "## What to Know", "## Movie Info", "## Cast & Crew"]:
                         if marker in testo_estratto:
                             testo_estratto = marker + testo_estratto.split(marker, 1)[1]
                             break
-                    
-                    # Rimozione delle griglie raccomandate a fondo pagina
-                    for marker in ["Most Popular at Home Now", "About Tomatometer", "Community Watch"]:
+                            
+                    # 3. TAGLIO FINALE (La "Coda")
+                    for marker in ["What to Watch", "Most Popular at Home Now", "About Tomatometer", "Community Watch"]:
                         if marker in testo_estratto:
                             testo_estratto = testo_estratto.split(marker)[0]
                             
-                    # 2. MODIFICA: Abbiamo TOLTO "## Cast & Crew" da questa lista della spazzatura!
-                    inizio_spazzatura = -1
-                    for trash in ["## Critics Reviews", "## Audience Reviews", "## My Rating", "## Photos", "## Videos"]:
-                        idx = testo_estratto.find(trash)
-                        if idx != -1 and (inizio_spazzatura == -1 or idx < inizio_spazzatura):
-                            inizio_spazzatura = idx
+                    # 4. RIMOZIONE per Hoppers
+                    spazzatura = [
+                        "## Critics Reviews", 
+                        "## Audience Reviews", 
+                        "## My Rating", 
+                        "## Photos", 
+                        "## Videos",
+                        "## Movie Clips",         
+                        "### More Like This",     
+                        "## Related Movie News"   
+                    ]
                     
-                    # 3. MODIFICA LOGICA: Salviamo in memoria la scheda tecnica del film prima di tagliare
-                    scheda_tecnica = ""
-                    if "## Movie Info" in testo_estratto:
-                        scheda_tecnica = "\n\n## Movie Info" + testo_estratto.split("## Movie Info")[-1]
-                        
-                    # Effettuiamo il taglio della spazzatura (Foto, Video, Recensioni)
-                    if inizio_spazzatura != -1:
-                        testo_estratto = testo_estratto[:inizio_spazzatura]
-                    
-                    # Se avevamo trovato la scheda tecnica prima, ma il taglio l'ha cancellata, la riattacchiamo in fondo!
-                    if "## Movie Info" not in testo_estratto and scheda_tecnica:
-                        testo_estratto += scheda_tecnica
-                        
+                    # Cancelliamo SOLO questi blocchi, unendo perfettamente Cast e Movie Info
+                    for trash in spazzatura:
+                        if trash in testo_estratto:
+                            pattern = re.escape(trash) + r".*?(?=\n## |\Z)"
+                            testo_estratto = re.sub(pattern, "", testo_estratto, flags=re.DOTALL)
+                            
+                    # Puliamo eventuali spazi vuoti doppi all'inizio o alla fine
+                    testo_estratto = testo_estratto.strip()
+                            
                 except Exception as e:
                     print(f"⚠️ Errore pulizia Rotten Tomatoes ignorato: {e}")
-                    pass # Silenziamo l'errore per non interrompere la pipeline
+                    pass
             elif "amazon.it" in domain:
                 try:
                     # Estrazione del titolo del prodotto
