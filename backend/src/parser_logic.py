@@ -122,6 +122,10 @@ async def perform_parse(url: str, local: bool = False, provided_html: str = ""):
                 try:
                     # 1. Normalizzazione degli header
                     testo_estratto = re.sub(r'##\s+', '## ', testo_estratto)
+
+                    # Cancella i link Markdown ignorando l'URL specifico del film
+                    testo_estratto = re.sub(r'\[Read Critics Reviews\]\([^)]+\)', '', testo_estratto)
+                    testo_estratto = re.sub(r'\[Read Audience Reviews\]\([^)]+\)', '', testo_estratto)
                     
                     # 2. TAGLIO INIZIALE: Trova dove inizia la roba utile e taglia l'intestazione
                     for marker in ["## Where to Watch", "## What to Know", "## Movie Info", "## Cast & Crew"]:

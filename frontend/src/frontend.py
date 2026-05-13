@@ -24,7 +24,7 @@ async def call_backend(method: str, endpoint: str, params=None, json_data=None):
             return await client.delete(url, params=params)
 
 # --- UTILITIES ---
-# Funzione per estrarre il dominio pulito da un URL, rimuovendo eventuali prefissi "www." e restituendo solo la parte principale del dominio, per garantire coerenza nella gestione dei domini all'interno del database e nelle operazioni di parsing e valutazione.
+# Funzione per estrarre il dominio pulito da un URL, rimuovendo eventuali prefissi "www." e restituendo solo la parte principale del dominio
 def get_exact_domain(url: str) -> str:
     """Estrae il dominio pulito da un URL (es. https://www.amazon.it/page -> amazon.it)"""
     domain = url.split("/")[2] if "://" in url else url.split("/")[0]
