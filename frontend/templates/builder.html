@@ -1,0 +1,84 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="row">
+    <div class="col-md-4 mb-4" data-aos="fade-right">
+        <div class="card p-4 shadow-sm h-100">
+            <h4>🛠 Gestione Dominio</h4>
+            <p class="text-muted small">Seleziona un dominio per visualizzare le risorse salvate.</p>
+            
+            <form method="GET" action="/builder">
+                <select name="domain" class="form-select mb-3 border-primary" onchange="this.form.submit()">
+                    <option value="">-- Seleziona Dominio --</option>
+                    {% for d in domains %}
+                    <option value="{{ d }}" {% if d == current_domain %}selected{% endif %}>{{ d }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+            <hr>
+            
+            <h6 class="fw-bold">URL presenti nel Gold Standard:</h6>
+            {% if current_domain and not urls %}
+                <div class="alert alert-info small">Nessuna risorsa presente per questo dominio.</div>
+            {% endif %}
+            
+            <ul class="list-group" style="max-height: 400px; overflow-y: auto;">
+                {% for u in urls %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <small class="text-truncate" style="max-width: 80%;" title="{{ u }}">{{ u.split('/')[-1] if u.split('/')[-1] else u }}</small>
+                    <a href="/builder/delete?url={{ u | urlencode }}&domain={{ current_domain }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Sei sicuro di voler eliminare questa risorsa e il relativo Gold Standard?');">X</a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    
+    <div class="col-md-8" data-aos="fade-left">
+        
+        {% if error %}
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm border-danger mb-4" role="alert">
+            <h5 class="alert-heading">⚠️ Attenzione</h5>
+            <hr>
+            <p class="mb-0 fw-bold">{{ error }}</p>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endif %}
+        
+        <div class="card p-4 shadow-sm mb-4 border-primary">
+            <h4>1️⃣ Aggiungi / Scarica Risorsa</h4>
+            <p class="text-muted small">Inserisci l'URL per scaricare l'HTML grezzo dal web.</p>
+            <form method="POST" action="/builder/preview">
+                <input type="hidden" name="domain" value="{{ current_domain }}">
+                <div class="input-group mb-3">
+                    <input type="url" name="url" class="form-control" placeholder="https://..." value="{{ preview_url if preview_url else '' }}" required>
+                    <button class="btn btn-primary fw-bold" type="submit">Scarica HTML</button>
+                </div>
+            </form>
+        </div>
+
+        {% if preview_html and not error %}
+        <div class="card p-4 shadow-sm border-success" data-aos="zoom-in">
+            <h4>2️⃣ Costruisci il Gold Standard</h4>
+            
+            <label class="form-label fw-bold mt-2">📄 HTML Grezzo Estratto:</label>
+            <p class="text-muted small mb-1">Copia questo codice, salvalo in un file <code>pagina.html</code> e aprilo nel browser per leggere comodamente il testo da estrarre.</p>
+            <textarea class="form-control mb-4 bg-light border" rows="5" readonly>{{ preview_html }}</textarea>
+            
+            <form method="POST" action="/builder/add">
+                <input type="hidden" name="url" value="{{ preview_url }}">
+                
+                <textarea name="html_text" style="display: none;">{{ preview_html }}</textarea>
+                
+                <label class="form-label fw-bold text-success">🏆 Testo Pulito (Gold Text):</label>
+                <textarea name="gold_text" class="form-control mb-3 border-success" rows="8" placeholder="Incolla qui il testo informativo che hai estratto manualmente..." required></textarea>
+                
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="/builder?domain={{ current_domain }}" class="btn btn-outline-secondary">Annulla</a>
+                    <button type="submit" class="btn btn-success fw-bold">💾 Salva nel Database</button>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+        
+    </div>
+</div>
+{% endblock %}

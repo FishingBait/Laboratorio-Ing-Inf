@@ -1,0 +1,95 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<style>
+    /* Effetto hover elegante per le card di navigazione */
+    .nav-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: 1px solid #e0e0e0;
+    }
+    .nav-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+        border-color: #b0bec5;
+    }
+    .icon-large {
+        font-size: 3.5rem;
+        margin-bottom: 15px;
+    }
+</style>
+
+<div class="row">
+    <div class="col-md-12 mb-4" data-aos="fade-down">
+        <div class="card p-4 text-center shadow-sm">
+            <h1>Progetto Finale - Laboratorio Ingegneria Informatica</h1>
+            <p class="text-muted">Pipeline end-to-end per l'acquisizione e analisi di documenti web.</p>
+            <hr>
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <h5>Studenti del Gruppo:</h5>
+                    <ul class="list-unstyled">
+                        {% for m in matricole %}<li>{{ m }}</li>{% endfor %}
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h5>Domini Supportati:</h5>
+                    {% for d in domains %}<span class="badge bg-primary m-1">{{ d }}</span>{% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-12 mb-5" data-aos="fade-up">
+        <div class="card p-4 shadow-sm">
+            <h4 class="text-center mb-4">📡 Stato del Sistema</h4>
+            <div class="row text-center">
+                {% for key, val in status.items() %}
+                <div class="col-md-4 mb-2">
+                    <div class="p-3 border rounded bg-light">
+                        <strong>{{ key|upper }}</strong><br>
+                        <span class="{% if val == 'ok' %}status-ok{% else %}status-error{% endif %}">
+                            ● {{ val|upper }}
+                        </span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-12">
+        <h3 class="text-center mb-4 text-secondary">Esplora le Funzionalità</h3>
+        <div class="row">
+            
+            <div class="col-md-4 mb-4" data-aos="zoom-in" data-aos-delay="100">
+                <div class="card h-100 p-4 text-center nav-card shadow-sm">
+                    <div class="icon-large">🔍</div>
+                    <h4>Parser & Eval</h4>
+                    <p class="text-muted mb-4">Testa il parser web sui domini e confronta l'estrazione con il Gold Standard e il Judge LLM.</p>
+                    <a href="/parser" class="btn btn-outline-primary mt-auto w-100 fw-bold">Vai al Parser</a>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-4" data-aos="zoom-in" data-aos-delay="200">
+                <div class="card h-100 p-4 text-center nav-card shadow-sm">
+                    <div class="icon-large">🛠️</div>
+                    <h4>GS Builder</h4>
+                    <p class="text-muted mb-4">Scarica l'HTML delle pagine e costruisci manualmente la verità di base (Gold Standard).</p>
+                    <a href="/builder" class="btn btn-outline-success mt-auto w-100 fw-bold">Vai al Builder</a>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-4" data-aos="zoom-in" data-aos-delay="300">
+                <div class="card h-100 p-4 text-center nav-card shadow-sm">
+                    <div class="icon-large">📈</div>
+                    <h4>Statistiche</h4>
+                    <p class="text-muted mb-4">Visualizza le metriche aggregate (F1 Score, Judge) e lo stato del database globale.</p>
+                    <a href="/stats" class="btn btn-outline-dark mt-auto w-100 fw-bold">Vai alle Statistiche</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}

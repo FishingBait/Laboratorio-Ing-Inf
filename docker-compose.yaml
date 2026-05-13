@@ -1,0 +1,52 @@
+services:
+  # 1. IL DATABASE MARIADB (La "casa" che mancava)
+  mariadb:
+    image: mariadb:10.11
+    container_name: database
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: mio_database
+      MYSQL_USER: user
+      MYSQL_PASSWORD: sapienza
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+
+  # 2. IL BACKEND (Il tuo codice Python)
+  backend:
+    build: ./backend
+    container_name: backend
+    ports:
+      - "8003:8003"
+    volumes:
+      - ./domains.json:/app/domains.json
+      - ./gs_data:/app/gs_data
+    depends_on:
+      - mariadb # Il  backend aspetta che il DB sia acceso prima di partire
+
+  # 3. IL FRONTEND (La tua interfaccia Web)
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    ports:
+      - "8004:8000"
+    environment:
+      - BACKEND_URL=http://backend:8003 # Corretto: il backend gira sulla 8003
+    depends_on:
+      - backend
+
+  # 4. L'LLM JUDGE (Ollama)
+  ollama:
+    image: ollama/ollama
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    entrypoint: /bin/sh -c "ollama serve & sleep 5 && ollama pull llama3.2:3b && wait"
+
+# Definizione dei "dischi rigidi" virtuali per non perdere i dati
+volumes:
+  ollama_data:
+  mariadb_data: # Aggiunto il volume per salvare i dati del DB!

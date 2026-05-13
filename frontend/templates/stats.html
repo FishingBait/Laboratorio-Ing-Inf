@@ -1,0 +1,78 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="row" data-aos="fade-up">
+    <div class="col-md-12">
+        <div class="card p-4 shadow-sm">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">📈 Panoramica Aggregata Domini</h2>
+                <span class="badge bg-info">Dati estratti dal Database</span>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Dominio</th>
+                            <th class="text-center">Web Resources</th>
+                            <th class="text-center">Gold Standard</th>
+                            <th class="text-center">Avg F1 Score</th>
+                            <th class="text-center">Avg Judge (1-5)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if not stats.web_resources %}
+                        <tr>
+                            <td colspan="5" class="text-center p-5 text-muted">
+                                Nessun dato presente nel database. Inizia popolando il Gold Standard!
+                            </td>
+                        </tr>
+                        {% endif %}
+
+                        {% for domain, count in stats.web_resources.items() %}
+                        <tr>
+                            <td><strong class="text-primary">{{ domain }}</strong></td>
+                            <td class="text-center"><span class="badge rounded-pill bg-secondary">{{ count }}</span></td>
+                            <td class="text-center">
+                                <span class="badge rounded-pill bg-success">{{ stats.gold_standard.get(domain, 0) }}</span>
+                            </td>
+                            <td class="text-center">
+                                {% set f1 = stats.avg_eval.get(domain, {}).get('token_level_eval', {}).get('f1') %}
+                                {% if f1 is not none and f1 != 'N/A' %}
+                                    <span class="fw-bold {% if f1|float > 0.8 %}text-success{% elif f1|float > 0.5 %}text-warning{% else %}text-danger{% endif %}">
+                                        {{ (f1|float * 100)|round(1) }}%
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted small">Dati insuff.</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% set judge = stats.avg_eval_judge.get(domain, {}).get('judge_score') %}
+                                {% if judge is not none and judge != 'N/A' %}
+                                    <div class="d-inline-block px-3 py-1 rounded-pill bg-light border border-primary fw-bold text-primary">
+                                        ⭐ {{ judge }}
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted small">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4" data-aos="fade-up" data-aos-delay="200">
+    <div class="col-md-12">
+        <div class="alert alert-light border shadow-sm">
+            <h5>💡 Nota sulle Statistiche</h5>
+            <p class="small text-muted mb-0">
+                Le metriche sono calcolate confrontando il parsing automatico attuale con il testo salvato nel Gold Standard. 
+                Se un dominio non ha voci nel Gold Standard, le valutazioni qualitative non possono essere generate.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

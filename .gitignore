@@ -1,0 +1,31 @@
+# ==========================================
+# VOLUMI DOCKER
+# ==========================================
+mariadb_data/
+ollama_data/
+
+# ==========================================
+# PYTHON & AMBIENTI VIRTUALI
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+.env
+
+# ==========================================
+# DIPENDENZE E CACHE
+# ==========================================
+pip-log.txt
+pip-delete-this-directory.txt
+.cache/
+.pytest_cache/
+
+# ==========================================
+# FILE DI SISTEMA (MacOS / Windows)
+# ==========================================
+.DS_Store
+Thumbs.db
+ehthumbs.db
