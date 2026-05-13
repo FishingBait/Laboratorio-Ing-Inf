@@ -92,7 +92,7 @@ async def full_eval(domain: str):
         return {"token_level_eval": {"f1": 0}, "judge_score": 0}
     
     f1s, judges = [], []
-    sem = asyncio.Semaphore(2)
+    sem = asyncio.Semaphore(2) #semaforo per limitare a 2 processi concorrenti, evitando sovraccarichi su CPU e Ollama durante le valutazioni complete di un intero dominio
 
     # Funzione asincrona per processare ogni riga del dominio, eseguendo parsing, valutazione token-level e giudizio LLM, e salvando i risultati nel DB riga per riga
     async def process_row(r):
