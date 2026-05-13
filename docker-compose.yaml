@@ -1,5 +1,5 @@
 services:
-  # 1. IL DATABASE MARIADB (La "casa" che mancava)
+  # 1. Il database (MariaDB)
   mariadb:
     image: mariadb:10.11
     container_name: database
@@ -13,7 +13,7 @@ services:
     volumes:
       - mariadb_data:/var/lib/mysql
 
-  # 2. IL BACKEND (Il tuo codice Python)
+  # 2. IL BACKEND 
   backend:
     build: ./backend
     container_name: backend
@@ -25,14 +25,14 @@ services:
     depends_on:
       - mariadb # Il  backend aspetta che il DB sia acceso prima di partire
 
-  # 3. IL FRONTEND (La tua interfaccia Web)
+  # 3. IL FRONTEND
   frontend:
     build: ./frontend
     container_name: frontend
     ports:
       - "8004:8000"
     environment:
-      - BACKEND_URL=http://backend:8003 # Corretto: il backend gira sulla 8003
+      - BACKEND_URL=http://backend:8003 
     depends_on:
       - backend
 
