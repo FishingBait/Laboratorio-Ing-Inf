@@ -13,7 +13,7 @@ BACKEND_URL = os.getenv("BACKEND_URL", "http://backend:8003")
 
 # Client asincrono per comunicare con il backend
 async def call_backend(method: str, endpoint: str, params=None, json_data=None):
-    # AUMENTA IL TIMEOUT A 120 SECONDI
+    # Il timeout è stato aumentato a 120 secondi per gestire operazioni più lunghe come il parsing di pagine complesse o la valutazione con LLM
     async with httpx.AsyncClient(timeout=120.0) as client: 
         url = f"{BACKEND_URL}{endpoint}"
         if method == "GET":
@@ -24,6 +24,7 @@ async def call_backend(method: str, endpoint: str, params=None, json_data=None):
             return await client.delete(url, params=params)
 
 # --- UTILITIES ---
+# Funzione per estrarre il dominio pulito da un URL, rimuovendo eventuali prefissi "www." e restituendo solo la parte principale del dominio, per garantire coerenza nella gestione dei domini all'interno del database e nelle operazioni di parsing e valutazione.
 def get_exact_domain(url: str) -> str:
     """Estrae il dominio pulito da un URL (es. https://www.amazon.it/page -> amazon.it)"""
     domain = url.split("/")[2] if "://" in url else url.split("/")[0]

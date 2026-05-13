@@ -10,7 +10,8 @@ from llm_judge import evaluate_with_llm
 router = APIRouter()
 
 # Rotte API per il backend
-#rotte per la gestione dei domini e del gold standard, parsing, valutazione token-level e giudizio LLM
+
+#rotta per la gestione dei domini e del gold standard, parsing, valutazione token-level e giudizio LLM
 @router.get("/domains")
 async def get_domains():
     return {"domains": load_domains()}
@@ -204,7 +205,8 @@ async def db_stats():
 
     conn.close()
     
-    #restituiamo un dizionario con tutte le statistiche aggregate per ogni dominio, includendo conteggi e medie di valutazione sia token-level che LLM Judge, per avere una panoramica completa dello stato del nostro dataset e delle performance del parser su ogni dominio presente nel DB
+    #restituiamo un dizionario con tutte le statistiche aggregate per ogni dominio, includendo conteggi e medie di valutazione 
+    # sia token-level che LLM Judge, per avere una panoramica completa dello stato del nostro dataset e delle performance del parser su ogni dominio presente nel DB
     return {
         "web_resources": wr_counts,
         "gold_standard": gs_counts,
