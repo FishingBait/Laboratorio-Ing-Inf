@@ -9,10 +9,13 @@ from llm_judge import evaluate_with_llm
 
 router = APIRouter()
 
+# Rotte API per il backend
+#rotte per la gestione dei domini e del gold standard, parsing, valutazione token-level e giudizio LLM
 @router.get("/domains")
 async def get_domains():
     return {"domains": load_domains()}
 
+# Rotta per ottenere le URL del gold standard di un dominio specifico
 @router.get("/gold_standard_urls")
 async def get_gs_urls(domain: str):
     clean_d = domain[4:] if domain.startswith("www.") else domain
@@ -23,6 +26,7 @@ async def get_gs_urls(domain: str):
     conn.close()
     return {"gold_standard_urls": urls}
 
+# Rotta per ottenere il gold standard completo di una URL
 @router.get("/gold_standard")
 async def get_gs(url: str):
     conn = get_db_connection()
@@ -33,16 +37,19 @@ async def get_gs(url: str):
     if not res: raise HTTPException(status_code=404, detail="URL non presente nel Gold Standard")
     return res
 
+# Rotta per eseguire il parsing di una URL (o HTML fornito) e restituire il testo estratto
 @router.post("/parse")
 async def api_parse(req: ParseRequest):
     # La fusione dei due campi per il grader del prof!
     html_finale = req.html or req.html_text or ""
     return await perform_parse(req.url, req.local, html_finale)
 
+# Rotta per valutazione token-level tra testo estratto e gold standard
 @router.post("/evaluate")
 async def api_eval(req: EvaluateRequest):
     return {"token_level_eval": calculate_token_level_eval(req.parsed_text, req.gold_text)}
 
+# Rotta per valutazione qualitativa con LLM Judge
 @router.post("/evaluate_judge")
 async def api_judge(req: EvaluateJudgeRequest):
     try:
@@ -55,9 +62,11 @@ async def api_judge(req: EvaluateJudgeRequest):
     except httpx.RequestError:
         raise HTTPException(status_code=503, detail="Server Ollama offline.")
 
+    # Calcolo token-level per avere un dato quantitativo da salvare nel DB insieme al giudizio qualitativo dell'LLM
     f1_score = calculate_token_level_eval(req.parsed_text, req.gold_text).get("f1", 0)
     res = await evaluate_with_llm(req.parsed_text, req.gold_text)
     
+    # Salvataggio dei risultati di valutazione (sia token-level che LLM Judge) nel DB per analisi future e statistiche aggregate
     conn = get_db_connection()
     if conn:
         cur = conn.cursor()
@@ -67,6 +76,7 @@ async def api_judge(req: EvaluateJudgeRequest):
         conn.close()
     return res
 
+# Rotta per valutazione completa su tutte le risorse di un dominio (token-level + LLM Judge)
 @router.get("/full_gs_eval")
 async def full_eval(domain: str):
     clean_d = domain[4:] if domain.startswith("www.") else domain
@@ -84,6 +94,7 @@ async def full_eval(domain: str):
     f1s, judges = [], []
     sem = asyncio.Semaphore(2)
 
+    # Funzione asincrona per processare ogni riga del dominio, eseguendo parsing, valutazione token-level e giudizio LLM, e salvando i risultati nel DB riga per riga
     async def process_row(r):
         async with sem:
             try:
@@ -95,7 +106,7 @@ async def full_eval(domain: str):
                 j_score = j_res.get('judge_score', 0)
                 j_feed = j_res.get('judge_feedback', '')
                 
-                # Salviamo nel DB riga per riga!
+                # Salviamo nel DB riga per riga per avere risultati parziali anche in caso di errori su alcune URL o timeout di Ollama
                 cur_in = conn.cursor()
                 cur_in.execute("""
                     REPLACE INTO evaluations (url, f1_score, judge_score, judge_feedback) 
@@ -108,8 +119,8 @@ async def full_eval(domain: str):
                 print(f"Errore su {r['url']}: {e}")
                 return 0, 0 
 
-    tasks = [process_row(r) for r in rows]
-    results = await asyncio.gather(*tasks)
+    tasks = [process_row(r) for r in rows] # Limitiamo a 2 processi concorrenti per evitare sovraccarichi su CPU e Ollama
+    results = await asyncio.gather(*tasks) # Aspettiamo che tutte le valutazioni siano completate prima di calcolare le medie e restituire i risultati
     conn.close()
 
     for f1, judge in results:
@@ -121,6 +132,7 @@ async def full_eval(domain: str):
         "judge_score": round(sum(judges)/len(judges), 2) if judges else 0
     }
 
+# Rotte per la gestione manuale delle risorse e del gold standard (aggiunta, eliminazione) e per statistiche sul DB
 @router.post("/add_web_resource")
 async def add_res(req: ResourceRequest):
     conn = get_db_connection()
@@ -131,6 +143,7 @@ async def add_res(req: ResourceRequest):
     conn.close()
     return {"status": "ok"}
 
+# Rotta per aggiungere o aggiornare il gold standard di una URL esistente
 @router.post("/add_gold_standard")
 async def add_gs(req: ResourceRequest):
     conn = get_db_connection()
@@ -142,6 +155,7 @@ async def add_gs(req: ResourceRequest):
     except: raise HTTPException(status_code=400, detail="URL non presente in web_resources")
     finally: conn.close()
 
+# Rotta per eliminare una risorsa web (e il suo gold standard associato)
 @router.delete("/web_resource")
 async def del_res(url: str):
     conn = get_db_connection()
@@ -151,6 +165,7 @@ async def del_res(url: str):
     conn.close()
     return {"status": "ok"}
 
+# Rotta per ottenere statistiche aggregate sul DB
 @router.get("/db_stats")
 async def db_stats():
     conn = get_db_connection()
@@ -189,6 +204,7 @@ async def db_stats():
 
     conn.close()
     
+    #restituiamo un dizionario con tutte le statistiche aggregate per ogni dominio, includendo conteggi e medie di valutazione sia token-level che LLM Judge, per avere una panoramica completa dello stato del nostro dataset e delle performance del parser su ogni dominio presente nel DB
     return {
         "web_resources": wr_counts,
         "gold_standard": gs_counts,
@@ -203,6 +219,7 @@ async def db_schema():
         "gold_standard": {"url": "varchar(500), PK, FK", "gold_text": "longtext"}
     }
 
+# Rotta per controllo stato di salute del backend, DB e Ollama
 @router.get("/status")
 async def get_status():
     status = {"backend": "ok", "database": "error", "ollama": "error"}

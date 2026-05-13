@@ -6,6 +6,7 @@ import re
 OLLAMA_URL = "http://ollama:11434/api/generate"
 DEFAULT_MODEL = "llama3.2:3b"
 
+# Funzione per comunicare con Ollama e ottenere un giudizio qualitativo sulla qualità del testo estratto, restituendo un punteggio da 1 a 5 e un feedback testuale, con gestione robusta dei casi in cui il modello non rispetta il formato JSON previsto o in caso di errori di comunicazione.
 async def evaluate_with_llm(parsed_text: str, gold_text: str, model_name: str = DEFAULT_MODEL) -> dict:
     """
     Invia il testo estratto e il Gold Standard a Ollama per una valutazione qualitativa.
@@ -25,7 +26,7 @@ async def evaluate_with_llm(parsed_text: str, gold_text: str, model_name: str = 
         "feedback": "<breve descrizione della qualità del testo, ad esempio 'Testo troncato', 'Ottimo', ecc.>"
     }}
     """
-    
+    # Costruiamo il payload per la richiesta a Ollama, specificando il modello da utilizzare e forzando la risposta in formato JSON per facilitare il parsing e l'estrazione dei dati di valutazione, con un timeout esteso per gestire i tempi di risposta più lunghi su CPU.
     payload = {
         "model": model_name,
         "prompt": prompt,
@@ -33,6 +34,7 @@ async def evaluate_with_llm(parsed_text: str, gold_text: str, model_name: str = 
         "stream": False
     }
     
+    # Comunichiamo con Ollama e gestiamo eventuali errori di rete o se il servizio è offline, restituendo un giudizio di default in caso di problemi di comunicazione, e implementando un fallback robusto per estrarre lo score anche se il modello non rispetta il formato JSON previsto.
     async with httpx.AsyncClient() as client:
         try:
             # Timeout lungo perché l'LLM potrebbe impiegare qualche decina di secondi su CPU

@@ -84,7 +84,7 @@ async def perform_parse(url: str, local: bool = False, provided_html: str = ""):
                 css_sel = "body"
                 esclusi = []
                 
-            # Esecuzione del crawler asincrono
+            # Esecuzione del crawler asincrono per scaricare l'HTML e convertirlo in Markdown, applicando i selettori e le esclusioni specifiche
             result = await crawler.arun(url=crawl_url, css_selector=css_sel, excluded_tags=esclusi)
             
             if not result.success: 
@@ -123,8 +123,8 @@ async def perform_parse(url: str, local: bool = False, provided_html: str = ""):
                     # Normalizzazione degli header markdown
                     testo_estratto = re.sub(r'##\s+', '## ', testo_estratto)
                     
-                    # Estrazione della parte centrale (Info del film) ignorando la testata della pagina
-                    for marker in ["## Where to Watch", "## What to Know", "## Movie Info"]:
+                    # 1. MODIFICA: Aggiunto "## Cast & Crew" ai marker di inizio pagina utili
+                    for marker in ["## Where to Watch", "## What to Know", "## Movie Info", "## Cast & Crew"]:
                         if marker in testo_estratto:
                             testo_estratto = marker + testo_estratto.split(marker, 1)[1]
                             break
@@ -134,22 +134,29 @@ async def perform_parse(url: str, local: bool = False, provided_html: str = ""):
                         if marker in testo_estratto:
                             testo_estratto = testo_estratto.split(marker)[0]
                             
-                    # Pulizia chirurgica della sezione "Movie Info", rimuovendo recensioni utenti e cast
+                    # 2. MODIFICA: Abbiamo TOLTO "## Cast & Crew" da questa lista della spazzatura!
+                    inizio_spazzatura = -1
+                    for trash in ["## Critics Reviews", "## Audience Reviews", "## My Rating", "## Photos", "## Videos"]:
+                        idx = testo_estratto.find(trash)
+                        if idx != -1 and (inizio_spazzatura == -1 or idx < inizio_spazzatura):
+                            inizio_spazzatura = idx
+                    
+                    # 3. MODIFICA LOGICA: Salviamo in memoria la scheda tecnica del film prima di tagliare
+                    scheda_tecnica = ""
                     if "## Movie Info" in testo_estratto:
-                        inizio_spazzatura = -1
-                        for trash in ["## Critics Reviews", "## Audience Reviews", "## My Rating", "## Cast & Crew", "## Photos", "## Videos"]:
-                            idx = testo_estratto.find(trash)
-                            if idx != -1 and (inizio_spazzatura == -1 or idx < inizio_spazzatura):
-                                inizio_spazzatura = idx
+                        scheda_tecnica = "\n\n## Movie Info" + testo_estratto.split("## Movie Info")[-1]
                         
-                        if inizio_spazzatura != -1:
-                            parte_iniziale = testo_estratto[:inizio_spazzatura]
-                            parte_finale = "## Movie Info" + testo_estratto.split("## Movie Info")[-1]
-                            testo_estratto = parte_iniziale + "\n" + parte_finale
+                    # Effettuiamo il taglio della spazzatura (Foto, Video, Recensioni)
+                    if inizio_spazzatura != -1:
+                        testo_estratto = testo_estratto[:inizio_spazzatura]
+                    
+                    # Se avevamo trovato la scheda tecnica prima, ma il taglio l'ha cancellata, la riattacchiamo in fondo!
+                    if "## Movie Info" not in testo_estratto and scheda_tecnica:
+                        testo_estratto += scheda_tecnica
+                        
                 except Exception as e:
                     print(f"⚠️ Errore pulizia Rotten Tomatoes ignorato: {e}")
-                    pass # Silenziamo l'errore per non interrompere la pipeline e restituire comunque il testo parziale
-                    
+                    pass # Silenziamo l'errore per non interrompere la pipeline
             elif "amazon.it" in domain:
                 try:
                     # Estrazione del titolo del prodotto

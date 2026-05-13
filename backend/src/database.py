@@ -1,6 +1,7 @@
 import mariadb
 import time
 
+# Configurazione della connessione al database MariaDB, con parametri specifici per l'utente, password, host, porta e nome del database. Questi parametri devono essere configurati correttamente per garantire la connessione al database e il funzionamento del backend.
 DB_CONFIG = {
     "user": "user",
     "password": "sapienza",
@@ -9,6 +10,7 @@ DB_CONFIG = {
     "database": "mio_database"
 }
 
+# Funzione per ottenere una connessione al database, con un meccanismo di retry che tenta di connettersi più volte in caso di errori di connessione, ad esempio se il database non è ancora pronto all'avvio del server, restituendo None se non riesce a stabilire una connessione dopo un numero definito di tentativi.
 def get_db_connection():
     retries = 15
     while retries > 0:
@@ -19,6 +21,7 @@ def get_db_connection():
             retries -= 1
     return None
 
+# Funzione per inizializzare il database, creando le tabelle necessarie per memorizzare le risorse web, i gold standard e le valutazioni, con gestione delle eccezioni e chiusura della connessione al database per garantire che il database sia pronto all'uso quando il server inizia ad accettare richieste.
 def init_db():
     conn = get_db_connection()
     if not conn: return
