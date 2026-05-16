@@ -3,7 +3,7 @@ import httpx
 from fastapi import FastAPI, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from typing import List, Dict, Any, Optional # <--- FIX: Aggiunto Optional qui
+from typing import List, Dict, Any, Optional 
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
