@@ -11,7 +11,7 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      # Aggiunto ./ per dire a Docker: "Salva i dati in questa cartella fisica del progetto"
+      # Salva i dati in questa cartella fisica del progetto
       - ./mariadb_data:/var/lib/mysql
 
   # 2. IL BACKEND 
@@ -44,11 +44,6 @@ services:
     ports:
       - "11434:11434"
     volumes:
-      # Rimane senza ./ perché deve essere un volume nascosto gestito da Docker
-      - ollama_data:/root/.ollama
+      # MODIFICATO: Aggiunto ./ per salvare il modello in una cartella locale del progetto
+      - ./ollama_data:/root/.ollama
     entrypoint: /bin/sh -c "ollama serve & sleep 5 && ollama pull llama3.2:3b && wait"
-
-# Definizione dei "dischi rigidi" virtuali
-volumes:
-  ollama_data:
-  # mariadb_data è stato rimosso da qui perché ora è una cartella locale!

@@ -13,7 +13,7 @@ from crawl4ai import AsyncWebCrawler
 from utils import get_exact_domain, load_domains
 from database import get_db_connection
 
-async def perform_parse(url: str, local: bool = False, provided_html: str = ""):
+async def perform_parse(url: str, local: bool = False, provided_html: str = "")-> dict:
     """
     Esegue il parsing di una pagina web restituendo il testo pulito in Markdown.
     

@@ -4,9 +4,11 @@ import re
 import collections
 from typing import List, Dict
 
-# Questo file contiene funzioni di utilità per il backend, come l'estrazione del dominio da un URL, il caricamento dei domini e dei gold 
-# standard dai file JSON, e il calcolo delle metriche di valutazione a livello di token tra il testo estratto e il gold standard, facilitando la gestione dei dati e 
-# la valutazione del parser all'interno del backend.
+"""
+ Questo file contiene funzioni di utilità per il backend, come l'estrazione del dominio da un URL, il caricamento dei domini e dei gold 
+ standard dai file JSON, e il calcolo delle metriche di valutazione a livello di token tra il testo estratto e il gold standard, facilitando 
+ la gestione dei dati e la valutazione del parser all'interno del backend.
+"""
 
 #funzione per estrarre il dominio pulito da un URL, rimuovendo eventuali prefissi come "www." per garantire una gestione 
 # uniforme dei domini all'interno del database e delle rotte del backend.
@@ -29,7 +31,8 @@ def get_domain_gs_from_json(domain: str) -> List[Dict]:
         return json.load(f).get("gold_standard", [])
     
 # funzione per calcolare le metriche di valutazione a livello di token tra il testo estratto e il gold standard, restituendo un dizionario con precisione, recall e F1 score,
-# utilizzata per fornire una valutazione quantitativa della qualità del parsing, che può essere visualizzata nel frontend o utilizzata come parte del feedback fornito da Ollama nella valutazione qualitativa. La funzione rimuove URL e link markdown, tokenizza i testi e calcola le metriche basate sui token comuni tra il testo estratto e il gold standard.
+# utilizzata per fornire una valutazione quantitativa della qualità del parsing, che può essere visualizzata nel frontend o utilizzata come parte del feedback fornito da Ollama 
+# nella valutazione qualitativa. La funzione rimuove URL e link markdown, tokenizza i testi e calcola le metriche basate sui token comuni tra il testo estratto e il gold standard.
 def calculate_token_level_eval(parsed_text: str, gold_text: str) -> Dict[str, float]:
     p = re.sub(r'http\S+|\[.*?\]\(.*?\)', '', parsed_text.lower())
     g = re.sub(r'http\S+|\[.*?\]\(.*?\)', '', gold_text.lower())

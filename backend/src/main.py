@@ -4,8 +4,12 @@ from routes import router
 from database import init_db, get_db_connection
 from utils import load_domains, get_domain_gs_from_json
 
-# Inizializzazione del backend con sincronizzazione del database all'avvio, caricamento dei dati dai file JSON e setup delle rotte definite in routes.py. Utilizziamo un lifespan asincrono per eseguire operazioni di setup prima che il server inizi ad accettare richieste, 
-# garantendo che il database sia popolato con i dati necessari per le operazioni di parsing e valutazione.
+"""
+Inizializzazione del backend con sincronizzazione del database all'avvio, caricamento dei dati dai file JSON e setup delle rotte definite in routes.py. 
+Utilizziamo un lifespan asincrono per eseguire operazioni di setup prima che il server inizi ad accettare richieste, 
+garantendo che il database sia popolato con i dati necessari per le operazioni di parsing e valutazione.
+"""
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("Sincronizzazione DB in corso...")
