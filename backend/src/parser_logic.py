@@ -68,23 +68,23 @@ async def perform_parse(url: str, local: bool = False, provided_html: str = ""):
         async with AsyncWebCrawler(headers=headers) as crawler:
             
             # 4. Configurazione dinamica dei selettori CSS in base al dominio
-            if "wikipedia.org" in domain:
+            if "wikipedia.org" in clean_domain:
                 css_sel = "#bodyContent" # Puntiamo al corpo centrale, escludendo la sidebar
                 esclusi = ['.navbox', '.toc', '.mw-editsection', '.hatnote', '#catlinks', '.printfooter', '.metadata', '.noprint', '.thumb', '.reference']
-            elif "ilmanifesto.it" in domain:
+            elif "ilmanifesto.it" in clean_domain:
                 css_sel = "article"  
                 esclusi = ['.header', '.footer', '.aside', '.ad', '.advertisement', '.related', '.social-share', 'figure', '.comments', '.newsletter-box']
-            elif "rottentomatoes.com" in domain:
+            elif "rottentomatoes.com" in clean_domain:
                 css_sel = "main" 
                 esclusi = ['rt-header', 'rt-footer', 'nav', '.ad-slot', '.ad-container', '#footer', 'rt-footer-nav', '.js-ad']
-            elif "amazon.it" in domain:
+            elif "amazon.it" in clean_domain:
                 css_sel = "#centerCol" # Puntiamo al blocco centrale del prodotto
                 esclusi = ['#promoPriceBlockMessage_feature_div', '#sns-right-box', '.a-popover-preload', '#buybox']
             else:
                 css_sel = "body"
                 esclusi = []
                 
-            # Esecuzione del crawler asincrono per scaricare l'HTML e convertirlo in Markdown, applicando i selettori e le esclusioni specifiche
+            # Esecuzione del crawler asincrono per scaricare l'HTML e convertirlo in Markdown
             result = await crawler.arun(url=crawl_url, css_selector=css_sel, excluded_tags=esclusi)
             
             if not result.success: 
@@ -93,32 +93,45 @@ async def perform_parse(url: str, local: bool = False, provided_html: str = ""):
             testo_estratto = result.markdown
             if not testo_estratto: 
                 testo_estratto = "## Contenuto vuoto\nTesto non trovato."
+                
             if not html_to_return: 
                 html_to_return = result.html or ""
             
             # --- 5. POST-PROCESSING E PULIZIA DEL TESTO ---
-            # Applichiamo euristiche specifiche per rimuovere il "rumore" residuo che il crawler non ha filtrato
+            # Applichiamo euristiche specifiche per rimuovere il "rumore" residuo
             
-            if "wikipedia.org" in domain:
-                # Troncamento alla fine del corpo principale (ignoriamo note e bibliografia)
-                for s in ["## Note", "## Voci correlate", "## Altri progetti", "## Collegamenti esterni"]:
-                    if s in testo_estratto: 
-                        testo_estratto = testo_estratto.split(s)[0]
+            if "wikipedia.org" in clean_domain:
+                try:
+                    # 1. Pulizia dei link Markdown: trasforma '[Parola](//link...)' in 'Parola'
+                    testo_estratto = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', testo_estratto)
+                    
+                    # 2. Taglio dell'intestazione standard di Wikipedia (se presente)
+                    if "Da Wikipedia, l'enciclopedia libera." in testo_estratto:
+                        testo_estratto = testo_estratto.split("Da Wikipedia, l'enciclopedia libera.")[-1]
+
+                    # 3. Troncamento alla fine del corpo principale
+                    for s in ["## Note", "## Bibliografia", "## Voci correlate", "## Altri progetti", "## Collegamenti esterni"]:
+                        if s in testo_estratto: 
+                            testo_estratto = testo_estratto.split(s)[0]
+                            
+                    testo_estratto = testo_estratto.strip()
+                except Exception as e:
+                    print(f"⚠️ Errore pulizia Wikipedia ignorato: {e}")
             
-            elif "ilmanifesto.it" in domain:
-                # Rimozione dei blocchi pubblicitari o suggerimenti di lettura interni all'articolo
+            elif "ilmanifesto.it" in clean_domain:
+                # Rimozione dei blocchi pubblicitari o suggerimenti di lettura interni
                 for s in ["Aggiornamenti", "### Da leggere", "**Esplora gli argomenti**", "Dalla parte del torto", "Registrati e scopri"]:
                     if s in testo_estratto: 
                         testo_estratto = testo_estratto.split(s)[0]
                 
-                # Rimozione del blocco paywall se accidentalmente incluso nel testo utile
+                # Rimozione del blocco paywall
                 link_abbonamento = "](https://ilmanifesto.it/abbonamenti/acquista/abbonamento-digitale-4x4)"
                 if link_abbonamento in testo_estratto: 
                     testo_estratto = testo_estratto.split(link_abbonamento)[-1]
                 elif "Abbonati per 10 giorni" in testo_estratto: 
                     testo_estratto = testo_estratto.split("Abbonati per 10 giorni")[-1]
 
-            elif "rottentomatoes.com" in domain:
+            elif "rottentomatoes.com" in clean_domain:
                 try:
                     # 1. Normalizzazione degli header
                     testo_estratto = re.sub(r'##\s+', '## ', testo_estratto)
@@ -138,31 +151,24 @@ async def perform_parse(url: str, local: bool = False, provided_html: str = ""):
                         if marker in testo_estratto:
                             testo_estratto = testo_estratto.split(marker)[0]
                             
-                    # 4. RIMOZIONE per Hoppers
+                    # 4. RIMOZIONE Spazzatura interna
                     spazzatura = [
-                        "## Critics Reviews", 
-                        "## Audience Reviews", 
-                        "## My Rating", 
-                        "## Photos", 
-                        "## Videos",
-                        "## Movie Clips",         
-                        "### More Like This",     
-                        "## Related Movie News"   
+                        "## Critics Reviews", "## Audience Reviews", "## My Rating", 
+                        "## Photos", "## Videos", "## Movie Clips", 
+                        "### More Like This", "## Related Movie News"
                     ]
                     
-                    # Cancelliamo SOLO questi blocchi, unendo perfettamente Cast e Movie Info
+                    # Cancelliamo SOLO questi blocchi
                     for trash in spazzatura:
                         if trash in testo_estratto:
                             pattern = re.escape(trash) + r".*?(?=\n## |\Z)"
                             testo_estratto = re.sub(pattern, "", testo_estratto, flags=re.DOTALL)
                             
-                    # Puliamo eventuali spazi vuoti doppi all'inizio o alla fine
                     testo_estratto = testo_estratto.strip()
-                            
                 except Exception as e:
                     print(f"⚠️ Errore pulizia Rotten Tomatoes ignorato: {e}")
-                    pass
-            elif "amazon.it" in domain:
+
+            elif "amazon.it" in clean_domain:
                 try:
                     # Estrazione del titolo del prodotto
                     linee = [line for line in testo_estratto.split('\n') if line.strip()]
@@ -179,7 +185,7 @@ async def perform_parse(url: str, local: bool = False, provided_html: str = ""):
                         parte_utile = testo_estratto[inizio_utile:]
                         testo_estratto = titolo + "\n\n### " + parte_utile
                         
-                    # Troncamento delle sezioni di marketing e up-selling di Amazon
+                    # Troncamento delle sezioni di marketing e up-selling
                     cut_words = [
                         "› [ Visualizza", "› Visualizza", "Visualizza altri dettagli", "Brief content visible",
                         "Marchio di qualità", "Spesso comprati insieme", "Prodotti correlati", "Descrizione prodotto"
@@ -188,13 +194,12 @@ async def perform_parse(url: str, local: bool = False, provided_html: str = ""):
                         if cw in testo_estratto:
                             testo_estratto = testo_estratto.split(cw)[0]
                             
-                    # Pulizia tramite Regex di bottoni javascript e immagini rotte rimaste nel Markdown
+                    # Pulizia tramite Regex di bottoni javascript e immagini rotte
                     testo_estratto = re.sub(r'\[.*?\]\(javascript:void\\\(0\\\)\)', '', testo_estratto)
                     testo_estratto = re.sub(r'!\[.*?\]\(.*?\)', '', testo_estratto)
                 except Exception as e:
                     print(f"⚠️ Errore pulizia Amazon ignorato: {e}")
-                    pass 
-            
+
             # Ritorno dell'oggetto finale formattato
             return {
                 "url": url,
@@ -205,7 +210,6 @@ async def perform_parse(url: str, local: bool = False, provided_html: str = ""):
             }
     finally:
         # 6. Pulizia di sistema
-        # Garantiamo sempre la rimozione del file temporaneo creato al punto 3,
-        # anche in caso di eccezioni o crash del parser, per non intasare l'hard disk del container.
+        # Garantiamo sempre la rimozione del file temporaneo creato al punto 3
         if tmp_path and os.path.exists(tmp_path):
             os.remove(tmp_path)

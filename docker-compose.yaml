@@ -11,7 +11,8 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - mariadb_data:/var/lib/mysql
+      # Aggiunto ./ per dire a Docker: "Salva i dati in questa cartella fisica del progetto"
+      - ./mariadb_data:/var/lib/mysql
 
   # 2. IL BACKEND 
   backend:
@@ -23,7 +24,7 @@ services:
       - ./domains.json:/app/domains.json
       - ./gs_data:/app/gs_data
     depends_on:
-      - mariadb # Il  backend aspetta che il DB sia acceso prima di partire
+      - mariadb
 
   # 3. IL FRONTEND
   frontend:
@@ -43,10 +44,11 @@ services:
     ports:
       - "11434:11434"
     volumes:
+      # Rimane senza ./ perché deve essere un volume nascosto gestito da Docker
       - ollama_data:/root/.ollama
     entrypoint: /bin/sh -c "ollama serve & sleep 5 && ollama pull llama3.2:3b && wait"
 
-# Definizione dei "dischi rigidi" virtuali per non perdere i dati
+# Definizione dei "dischi rigidi" virtuali
 volumes:
   ollama_data:
-  mariadb_data: # Aggiunto il volume per salvare i dati del DB!
+  # mariadb_data è stato rimosso da qui perché ora è una cartella locale!

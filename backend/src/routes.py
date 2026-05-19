@@ -138,8 +138,16 @@ async def full_eval(domain: str):
 async def add_res(req: ResourceRequest):
     conn = get_db_connection()
     cur = conn.cursor()
+    
+    # Estraiamo il dominio tramite la funzione di utilità
+    domain = get_exact_domain(req.url)
+    
+    # PULIZIA: Rimuoviamo il www. se presente all'inizio
+    if domain.startswith("www."):
+        domain = domain.replace("www.", "", 1)
+        
     cur.execute("INSERT INTO web_resources (url, domain, html_text) VALUES (?, ?, ?)", 
-                (req.url, get_exact_domain(req.url), req.html_text))
+                (req.url, domain, req.html_text))
     conn.commit()
     conn.close()
     return {"status": "ok"}

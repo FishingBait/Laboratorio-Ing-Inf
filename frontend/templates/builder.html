@@ -59,9 +59,16 @@
         <div class="card p-4 shadow-sm border-success" data-aos="zoom-in">
             <h4>2️⃣ Costruisci il Gold Standard</h4>
             
-            <label class="form-label fw-bold mt-2">📄 HTML Grezzo Estratto:</label>
-            <p class="text-muted small mb-1">Copia questo codice, salvalo in un file <code>pagina.html</code> e aprilo nel browser per leggere comodamente il testo da estrarre.</p>
-            <textarea class="form-control mb-4 bg-light border" rows="5" readonly>{{ preview_html }}</textarea>
+            <div class="d-flex justify-content-between align-items-end mb-2 mt-2">
+                <div>
+                    <label class="form-label fw-bold mb-0">📄 HTML Grezzo Estratto:</label>
+                    <p class="text-muted small mb-0">Copia questo codice, salvalo in un file <code>pagina.html</code> e aprilo nel browser.</p>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-primary fw-bold" id="copyHtmlBtn" onclick="copyHtmlToClipboard()">
+                    📋 Copia HTML
+                </button>
+            </div>
+            <textarea id="rawHtmlTextarea" class="form-control mb-4 bg-light border" rows="5" readonly>{{ preview_html }}</textarea>
             
             <form method="POST" action="/builder/add">
                 <input type="hidden" name="url" value="{{ preview_url }}">
@@ -81,4 +88,29 @@
         
     </div>
 </div>
+
+<script>
+    function copyHtmlToClipboard() {
+        // Prende il testo dalla textarea
+        var htmlText = document.getElementById("rawHtmlTextarea").value;
+        var btn = document.getElementById("copyHtmlBtn");
+        
+        // Copia negli appunti
+        navigator.clipboard.writeText(htmlText).then(function() {
+            // Effetto visivo di successo
+            var originalText = btn.innerHTML;
+            btn.innerHTML = "✅ Copiato!";
+            btn.classList.replace("btn-outline-primary", "btn-success");
+            
+            // Fa tornare il bottone normale dopo 2 secondi
+            setTimeout(function() {
+                btn.innerHTML = originalText;
+                btn.classList.replace("btn-success", "btn-outline-primary");
+            }, 2000);
+        }).catch(function(err) {
+            console.error('Errore nella copia: ', err);
+            alert("Impossibile copiare il testo.");
+        });
+    }
+</script>
 {% endblock %}
