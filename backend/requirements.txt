@@ -4,3 +4,5 @@ pydantic==2.5.2
 crawl4ai
 httpx
 mariadb
+mistune
+beautifulsoup4

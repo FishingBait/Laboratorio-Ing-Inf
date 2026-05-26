@@ -2,6 +2,7 @@
 # VOLUMI DOCKER
 # ==========================================
 ollama_data/
+mariadb_data/
 
 # ==========================================
 # PYTHON & AMBIENTI VIRTUALI
