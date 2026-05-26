@@ -1,8 +1,7 @@
 import json
 import os
 import re
-import collections
-import string  
+import collections 
 from typing import List, Dict
 import mistune
 from bs4 import BeautifulSoup
@@ -47,7 +46,7 @@ def remove_markdown(md: str) -> str:
     text = re.sub(r'\n+', '\n', text) # collassa nuove linee multiple in una sola
     return text.strip()
 
-# --- FUNZIONE DI VALUTAZIONE DEFINITIVA (PUNTA AL 100%) ---
+# --- FUNZIONE DI VALUTAZIONE DEFINITIVA ---
 def calculate_token_level_eval(parsed_text: str, gold_text: str) -> Dict[str, float]:
     # 1. Rimuoviamo SOLO i link con http (esattamente come fanno gli script universitari base)
     p_text = re.sub(r'http\S+', '', parsed_text)

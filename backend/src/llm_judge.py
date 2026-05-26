@@ -10,31 +10,43 @@ async def evaluate_with_llm(parsed_text: str, gold_text: str, model_name: str = 
     Invia il testo estratto e il Gold Standard a Ollama per una valutazione qualitativa,
     utilizzando una rubrica di valutazione esplicita e temperatura a 0 per determinismo.
     """
-    
+
     # Il System Prompt definisce il ruolo, le regole di tolleranza e la rubrica.
     system_prompt = """Sei un giudice imparziale esperto in data extraction. 
-Il tuo compito è valutare quanto un "Testo estratto" sia fedele al "Gold Standard".
-REGOLA FONDAMENTALE: Ignora le differenze di formattazione (spazi extra, a capo mancanti, punteggiatura diversa). Valuta SOLO la presenza e la correttezza del contenuto informativo.
+    Il tuo compito è valutare quanto un "Testo estratto" sia fedele al "Gold Standard".
 
-Usa RIGOROSAMENTE questa scala:
-5: Eccellente. Il testo estratto contiene tutte le informazioni chiave del Gold Standard.
-4: Buono. Manca qualche dettaglio minore o c'è un leggero rumore, ma il senso generale è perfettamente intatto.
-3: Sufficiente. Manca qualche informazione rilevante, ma il nucleo del messaggio è presente.
-2: Scarso. Mancano informazioni fondamentali, oppure c'è troppo testo irrilevante (HTML, script).
-1: Pessimo. Testo incomprensibile, vuoto o completamente scollegato dal Gold Standard.
+    NOTA BENE: I testi forniti potrebbero essere troncati per ottimizzazione tecnica. 
+    Valuta solo le informazioni presenti nella porzione di testo che ti viene passata. 
+    Non penalizzare il testo per eventuali interruzioni improvvise alla fine del contenuto.
 
-Devi rispondere ESCLUSIVAMENTE con un oggetto JSON."""
+    REGOLA FONDAMENTALE: Ignora le differenze di formattazione (spazi extra, a capo mancanti, punteggiatura diversa). Valuta SOLO la presenza e la correttezza del contenuto informativo.
+
+    Usa RIGOROSAMENTE questa scala:
+    5: Eccellente. Le informazioni chiave presenti nel testo estratto corrispondono a quelle del Gold Standard.
+    4: Buono. Manca qualche dettaglio minore o c'è un leggero rumore, ma il senso generale è perfettamente intatto.
+    3: Sufficiente. Manca qualche informazione rilevante, ma il nucleo del messaggio è presente.
+    2: Scarso. Mancano informazioni fondamentali, oppure c'è troppo testo irrilevante.
+    1: Pessimo. Testo incomprensibile, vuoto o completamente scollegato dal Gold Standard.
+
+    Devi rispondere ESCLUSIVAMENTE con un oggetto JSON."""
+
+    # TRONCAMENTO: Prendiamo solo i primi 1500 caratteri di entrambi i testi(autorizzato dal professore), per evitare problemi di token limit con modelli più piccoli
+    # Sono più che sufficienti per un giudizio di qualità 1-5.
+    MAX_CHARS = 1500 
+    
+    p_text_truncated = parsed_text[:MAX_CHARS] + ("..." if len(parsed_text) > MAX_CHARS else "")
+    g_text_truncated = gold_text[:MAX_CHARS] + ("..." if len(gold_text) > MAX_CHARS else "")
 
     # L'User Prompt contiene solo i dati e il reminder del formato in uscita.
     user_prompt = f"""
 Testo estratto dal parser:
 ---
-{parsed_text}
+{p_text_truncated}
 ---
 
 Testo di riferimento (Gold Standard):
 ---
-{gold_text}
+{g_text_truncated}
 ---
 
 Rispondi SOLO con un JSON nel seguente formato, senza aggiungere testo prima o dopo:
