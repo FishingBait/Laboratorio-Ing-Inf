@@ -31,7 +31,7 @@ def get_domain_gs_from_json(domain: str) -> List[Dict]:
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f).get("gold_standard", [])
 
-# --- NUOVA FUNZIONE DEL PROFESSORE ---
+# --- Funzione per rimuovere il Markdown ---
 def remove_markdown(md: str) -> str:
     """
     Rimuove il Markdown da una stringa, restituendo solo il testo pulito.
