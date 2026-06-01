@@ -44,6 +44,6 @@ services:
     ports:
       - "11434:11434"
     volumes:
-      # MODIFICATO: Aggiunto ./ per salvare il modello in una cartella locale del progetto
+      # MODIFICATO: Salvare il modello in una cartella locale del progetto
       - ./ollama_data:/root/.ollama
     entrypoint: /bin/sh -c "ollama serve & sleep 5 && ollama pull llama3.2:3b && wait"
