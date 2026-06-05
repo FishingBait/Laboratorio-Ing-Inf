@@ -28,6 +28,10 @@ async def call_backend(method: str, endpoint: str, params=None, json_data=None):
         elif method == "POST":
             return await client.post(url, json=json_data)
         elif method == "DELETE":
+            # Se stiamo passando un JSON
+            if json_data:
+                return await client.request("DELETE", url, json=json_data)
+            # Se invece passiamo i parametri normali (fallback)
             return await client.delete(url, params=params)
 
 def get_exact_domain(url: str) -> str:
@@ -235,7 +239,7 @@ async def builder_delete(url: str, domain: str):
     Richiede al backend l'eliminazione completa di una risorsa web 
     (che a cascata eliminerà anche il relativo Gold Standard).
     """
-    await call_backend("DELETE", "/web_resource", params={"url": url})
+    await call_backend("DELETE", "/web_resource", json_data={"url": url})
     return RedirectResponse(url=f"/builder?domain={domain}", status_code=303)
 
 # =====================================================================

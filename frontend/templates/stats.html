@@ -56,7 +56,7 @@
                                     {% set judge = stats.get('avg_eval_judge', {}).get(domain, {}).get('judge_score', 0) %}
                                     {% if judge is not none and judge != 0 %}
                                         <div class="d-inline-block px-3 py-1 rounded-pill bg-light border border-primary fw-bold text-primary">
-                                            ⭐ {{ (judge|float * 10)|round(1)}}
+                                            ⭐ {{ (judge|float)|round(1)}}
                                         </div>
                                     {% else %}
                                         <span class="text-muted small">-</span>
