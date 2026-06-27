@@ -1,4 +1,4 @@
-# 🕸️ Web Parsing & Evaluation Pipeline
+# Web Parsing & Evaluation Pipeline
 
 Un sistema software completo e automatizzato per estrarre, pulire e valutare contenuti testuali da pagine web complesse. Il progetto gestisce lo scraping dinamico, la pulizia del DOM e integra un sistema di valutazione ibrido (matematico e basato su Intelligenza Artificiale) per misurare la qualità dei dati estratti.
 
