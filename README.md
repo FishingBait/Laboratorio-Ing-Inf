@@ -2,7 +2,7 @@
 
 Un sistema software completo e automatizzato per estrarre, pulire e valutare contenuti testuali da pagine web complesse. Il progetto gestisce lo scraping dinamico, la pulizia del DOM e integra un sistema di valutazione ibrido (matematico e basato su Intelligenza Artificiale) per misurare la qualità dei dati estratti.
 
-Questo progetto è stato sviluppato per il corso di Laboratorio di Informatica.
+Questo progetto è stato sviluppato per l'esame di **Laboratorio di Informatica**, all'interno del corso di laurea in **Ingegneria Informatica** presso **Sapienza Università di Roma**.
 
 ## 👥 Autori
 - **Lorenzo Bordi** (Matricola: 2066423)
